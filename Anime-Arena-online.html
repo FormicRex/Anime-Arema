@@ -894,11 +894,14 @@ const g=document.createElement('button');g.className='gr';g.innerHTML='<img src=
 <script>/* Mode online (2 pemain): lobi + sinkronisasi pilihan karakter lewat PeerJS (WebRTC).
    Setiap pemain menjalankan simulasi yang sama dari seed yang sama (lihat start(seed)). */
 (function(){
-const VER='aa-1',
-ICE=[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}], /* tambahkan server TURN di sini bila perlu */
+const VER='aa-2',
+U='b27ebeb1d3d9c68e4f195859',K='LvMkfpcrKOyailaO',H='global.relay.metered.ca', /* TURN Metered; ganti bila credential diganti */
+ICE=[{urls:'stun:stun.relay.metered.ca:80'},{urls:'stun:stun.l.google.com:19302'},
+ {urls:'turn:'+H+':80',username:U,credential:K},{urls:'turn:'+H+':80?transport=tcp',username:U,credential:K},
+ {urls:'turn:'+H+':443',username:U,credential:K},{urls:'turns:'+H+':443?transport=tcp',username:U,credential:K}],
 SRC=['https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js','https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'],
 AL='ABCDEFGHJKMNPQRSTUVWXYZ23456789',MOCK=!!window.__NETMOCK;
-let link=null,peer=null,role=null,room='',st='idle',msg='',open=false,my=false,their=false,starting=0,applying=0,lastSent='',tSync=0,tJoin=0,tGo=0;
+let relay=false,link=null,peer=null,role=null,room='',st='idle',msg='',open=false,my=false,their=false,starting=0,applying=0,lastSent='',tSync=0,tJoin=0,tGo=0;
 const mkCode=()=>Array.from({length:5},()=>AL[_MR()*AL.length|0]).join(''),
 own=i=>role==='host'?i<3:i>=3,
 okKey=k=>typeof k==='string'&&!!CH[k]&&k!=='mahoraga',
@@ -913,13 +916,14 @@ const P_=$('#nP');
 function startLabel(){$('#start').textContent=NETO?(my?'⏳ Menunggu lawan… (ketuk untuk batal)':'✅ SIAP'):'MULAI PERTARUNGAN'}
 function render(){
  const m=msg?'<div class="nm">'+msg+'</div>':'';
- if(st==='idle')P_.innerHTML='<div class="nr"><button data-a="make">Buat Room</button></div><div class="nr"><input id="nC" maxlength="5" placeholder="KODE" autocapitalize="characters" autocomplete="off" aria-label="Kode room"><button data-a="join">Gabung</button></div>'+m;
+ if(st==='idle')P_.innerHTML='<div class="nr"><button data-a="make">Buat Room</button></div><div class="nr"><input id="nC" maxlength="5" placeholder="KODE" autocapitalize="characters" autocomplete="off" aria-label="Kode room"><button data-a="join">Gabung</button></div><label class="nm"><input type="checkbox" id="nF" style="width:auto"'+(relay?' checked':'')+'> Paksa lewat server TURN (untuk uji koneksi)</label>'+m;
  else if(st==='hosting')P_.innerHTML=(room?'<div class="nm">Kode room (bagikan ke teman):</div><div class="nc">'+room+'</div><div class="nr"><button data-a="copy">Salin</button><button data-a="leave">Batal</button></div><div class="nm">Menunggu teman bergabung…</div>':'<div class="nm">Menyiapkan room…</div><div class="nr"><button data-a="leave">Batal</button></div>')+m;
  else if(st==='joining')P_.innerHTML='<div class="nm">Menyambung ke room '+room+'…</div><div class="nr"><button data-a="leave">Batal</button></div>'+m;
  else P_.innerHTML='<div class="nm">✅ Terhubung · Kamu: <b>Tim '+(role==='host'?'A':'B')+'</b> · Room '+room+'</div><div class="nm">Lawan: <b>'+(their?'siap ✅':'belum siap')+'</b>'+(my?' · Kamu: siap ✅':'')+'</div><div class="nm">Pilih karakter untuk slot Tim '+(role==='host'?'A':'B')+', lalu tekan SIAP. Mode & slot lawan tersinkron otomatis.</div><div class="nr"><button data-a="leave">Keluar room</button></div>'+m;
  startLabel()}
 $('#nOn').onclick=()=>{P_.hidden=!P_.hidden;if(!P_.hidden)render()};
 P_.addEventListener('click',e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a)return;
+ if(a==='make'||a==='join')relay=!!($('#nF')&&$('#nF').checked);
  if(a==='make')hostRoom();
  else if(a==='join'){const c=($('#nC').value||'').trim().toUpperCase();if(c.length<4){msg='Masukkan kode room dari temanmu.';render();return}joinRoom(c)}
  else if(a==='copy'){try{navigator.clipboard.writeText(room);msg='Kode disalin.'}catch(x){msg='Salin manual: '+room}render()}
@@ -935,7 +939,7 @@ async function hostRoom(att=0){
  if(MOCK){room=mkCode();role='host';window.__mev=mockEv;window.__mx({k:'host',code:room});render();return}
  try{await loadPeer()}catch(e){return fail('Gagal memuat pustaka PeerJS. Cek internet.')}
  if(st!=='hosting')return;
- const c=mkCode(),p=new Peer('aarena-'+c,{config:{iceServers:ICE},debug:0});peer=p;
+ const c=mkCode(),p=new Peer('aarena-'+c,{config:{iceServers:ICE,iceTransportPolicy:relay?'relay':'all'},debug:0});peer=p;
  p.on('open',()=>{if(peer!==p)return;room=c;role='host';render()});
  p.on('connection',conn=>{if(link||open){conn.on('open',()=>conn.close());return}attach(conn)});
  p.on('error',e=>{if(peer!==p)return;if(e.type==='unavailable-id'&&att<4){p.destroy();peer=null;hostRoom(att+1)}else fail(errTxt(e))});
@@ -946,7 +950,7 @@ async function joinRoom(c){
  if(MOCK){window.__mev=mockEv;window.__mx({k:'join',code:c});return}
  try{await loadPeer()}catch(e){return fail('Gagal memuat pustaka PeerJS. Cek internet.')}
  if(st!=='joining')return;
- const p=new Peer(undefined,{config:{iceServers:ICE},debug:0});peer=p;
+ const p=new Peer(undefined,{config:{iceServers:ICE,iceTransportPolicy:relay?'relay':'all'},debug:0});peer=p;
  p.on('open',()=>{if(peer!==p)return;attach(p.connect('aarena-'+c,{reliable:true,serialization:'json'}))});
  p.on('error',e=>{if(peer===p)fail(errTxt(e))})}
 function mockEv(ev){if(ev.k==='open'){link={send:m=>window.__mx({k:'data',m}),close:()=>window.__mx({k:'close'})};connected()}else if(ev.k==='data')onData(ev.m);else if(ev.k==='close')gone('Lawan keluar atau koneksi terputus.');else if(ev.k==='err')fail(errTxt({type:ev.type}))}
