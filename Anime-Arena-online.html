@@ -48,7 +48,7 @@ button.sl.roll{border-color:#ffd21a;animation:rb .25s infinite alternate}@keyfra
 .gmc:after{content:'';position:absolute;top:0;bottom:0;width:40%;left:-60%;background:linear-gradient(100deg,#fff0,#fff9,#fff0);animation:mvs 1.6s ease-in-out 1.2s infinite}
 </style></head><body><main>
 <div id="menu"><h1>⚔️ Anime Arena (Bot vs Bot)</h1>
-<div class="row"><button id="m1" class="on">1 vs 1</button><button id="m2">2 vs 2</button><button id="m3">3 vs 3</button><button id="rl">🎲 ACAK KARAKTER</button></div>
+<div class="row"><button id="m1" class="on">1 vs 1</button><button id="m2">2 vs 2</button><button id="m3">3 vs 3</button><button id="m4">5 Pemain</button><button id="rl">🎲 ACAK KARAKTER</button></div>
 <h2>Slot petarung (ketuk slot, lalu pilih karakter)</h2><div class="row" id="slots"></div>
 <h2>Karakter</h2><div id="qw"><input id="q" type="search" placeholder="🔍 Cari karakter…" autocomplete="off" enterkeyhint="search" aria-label="Cari karakter"><small id="qc"></small></div><div class="row" id="grid"></div><div id="qn" hidden>😕 Tidak ada karakter yang cocok.</div>
 <button class="go" id="start">MULAI PERTARUNGAN</button></div>
@@ -365,8 +365,8 @@ TN=TN.filter(n=>n.tm>0);stepSW(dt);stepGB(dt);
 P=P.filter(p=>!p.dead);B=B.filter(b=>!(b.dead&&(b.clone||b.heart)));
 for(const q of Q){q.x+=q.vx*dt;q.y+=q.vy*dt;q.l-=dt}Q=Q.filter(q=>q.l>0);
 for(const t of T){t.l-=dt;t.y-=20*dt}T=T.filter(t=>t.l>0);if(wv){wv.r+=900*dt;if(wv.r>950)wv=null}
-const a=B.filter(b=>!b.dead&&!b.clone&&!b.heart&&!b.pu&&b.team==0).length,c=B.filter(b=>!b.dead&&!b.clone&&!b.heart&&!b.pu&&b.team==1).length;
-if(!a||!c){run=0;const nm=t=>B.filter(b=>!b.clone&&!b.heart&&!b.mh&&!b.pu&&b.team==t).map(b=>CH[b.c].n).join(' + ');winSeq(a?0:1,!!(a||c),nm(a?0:1))}}
+const al=new Set();for(const b of B)if(!b.dead&&!b.clone&&!b.heart&&!b.pu)al.add(b.team);
+if(al.size<2){run=0;const wt=al.size?[...al][0]:-1,nm=t=>B.filter(b=>!b.clone&&!b.heart&&!b.mh&&!b.pu&&b.team==t).map(b=>CH[b.c].n).join(' + ');winSeq(wt,al.size>0,nm(wt))}}
 
 /* ===== MVP: sinematik dewi pemberi berkah ===== */
 let MVT=[],MVR=0;
@@ -495,7 +495,7 @@ function winSeq(team,win,names){mvClear();const ov=document.querySelector('#ov')
  if(!win){ot.innerHTML='<div class="wn">SERI</div>';ov.style.display='flex';fitOv();return}
  const m=pickMVP(team);
  const mv=m?'<div class="mvp"><div class="mvl">★ MVP ★</div><div class="mvc"><img src="'+CH[m.c].url+'" alt=""><span class="mvn">'+CH[m.c].n+'</span></div></div>':'';
- const fin='<div class="tro">'+TRO+'</div>'+mv+'<div class="vic">VICTORY</div><div class="wn">'+(team===0?'Tim A':'Tim B')+'<br>'+names+'</div>';
+ const fin='<div class="tro">'+TRO+'</div>'+mv+'<div class="vic">VICTORY</div><div class="wn">'+tLab(team)+'<br>'+names+'</div>';
  if(!m){ot.innerHTML=fin;ov.style.display='flex';fitOv();return}
  ov.style.display='flex';mvScene(m,team,names,fin)}
 function draw0(){
@@ -515,7 +515,7 @@ for(const b of B)if(!b.dead&&b.rk>0){const z=170;ctx.globalAlpha=.9;ctx.drawImag
 for(const b of B)if(!b.dead&&b.c==='yuta'&&b.dash){const a=ang(b,b.dash.t);ctx.save();ctx.translate(b.x+Math.cos(a)*42,b.y+Math.sin(a)*42);ctx.rotate(a+Math.PI/2);ctx.drawImage(SK.kt,-7,-70,14,140);ctx.restore()}
 for(const p of PU){ctx.globalAlpha=Math.min(1,p.tm*2);if(p.k=='cs')ctx.drawImage(SK.cs,p.x-45,p.y-150,90,155);else if(p.k=='jl')jlDraw(p);else{ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.a);ctx.drawImage(SK.kt,-6,-55,12,110);ctx.restore()}ctx.globalAlpha=1}
 drawAV();for(const e of SW){const z=e.r*2.8;ctx.globalAlpha=Math.min(1,e.tm);ctx.drawImage(SK[e.k],e.x-z/2,e.y-z/2,z,z);ctx.globalAlpha=1}
-for(const b of B){if(b.dead)continue;const col=b.team?'#ff5a6a':'#4da3ff';
+for(const b of B){if(b.dead)continue;const col=tCol(b.team);
 if(b.heart){ctx.fillStyle=b.hit>0?'#fff8':'#ff204055';ctx.strokeStyle='#ff4060';ctx.lineWidth=4;ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,TAU);ctx.fill();ctx.stroke();ctx.font='22px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText('❤',b.x,b.y+8);ctx.fillStyle='#000a';ctx.fillRect(b.x-24,b.y-b.r-10,48,6);ctx.fillStyle=col;ctx.fillRect(b.x-24,b.y-b.r-10,48*Math.max(0,b.hp)/200,6);continue}
 if(b.pu){const im=PIM[b.pu],N=PN[b.pu];let ih=70;if(im){const Z=b.sz||1;ih=96*Z;let iw=ih*im.width/im.height;if(iw>140*Z)ih=140*Z*im.height/im.width}ctx.globalAlpha=b.hit>0?.55:1;if(im){const iw=ih*im.width/im.height;ctx.drawImage(im,b.x-iw/2,b.y-ih/2,iw,ih)}else{ctx.font='40px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText({arsene:'🎭',lucifer:'😈',satanael:'🦇',odin:'⚡'}[b.pu],b.x,b.y+14)}ctx.globalAlpha=1;ctx.fillStyle='#000a';ctx.fillRect(b.x-24,b.y-ih/2-10,48,6);ctx.fillStyle=col;ctx.fillRect(b.x-24,b.y-ih/2-10,48*Math.max(0,b.hp)/(b.hm||25),6);ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.fillText(N,b.x,b.y+ih/2+12);continue}if(b.ins||b.rb){ctx.font='22px system-ui';ctx.textAlign='center';ctx.fillStyle='#fff';ctx.fillText(b.em||'🪲',b.x,b.y+8);continue}
 ctx.globalAlpha=b.clone?.75:b.stl>0?.35:b.slp>0?.6:1;
@@ -540,10 +540,15 @@ if(TF.t>0){ctx.fillStyle='#8ad8ff30';ctx.fillRect(0,0,W,W);ctx.fillStyle='#fff';
 function loop(t){if(!run)return;const el=Math.max(0,Math.min(.1,(t-last)/1000||0));last=t;if(CS&&performance.now()-CS.t0>=CS.dur)bhEnd();if(CS)acc=0;else{acc+=el*spd;Math.random=simRand;for(let n=0;acc>=STEP&&run&&!CS&&n<60;n++,acc-=STEP)step(STEP);Math.random=_MR}draw();drawCS();requestAnimationFrame(loop)}
 function start(seed){seedSim(seed==null?_MR()*4294967296:seed);acc=0;Math.random=simRand;try{start0()}finally{Math.random=_MR}}
 function start0(){mvClear();GB=[];B=[];P=[];Q=[];T=[];TN=[];BM=[];MC=[];CS=null;SD=[];SG=[];EY=[];SW=[];GS=[];HZ=[];RH=[];EX=[];TF={t:0,team:-1};PU=[];GT=0;wv=null;RWS=[];RWT=0;RWF=null;const ps=mode==1?[[[150,320]],[[490,320]]]:mode==2?[[[150,200],[150,440]],[[490,200],[490,440]]]:[[[140,120],[140,320],[140,520]],[[500,120],[500,320],[500,520]]];
-for(let t=0;t<2;t++)for(let i=0;i<mode;i++){const b=mkB(sl[t*3+i],t,ps[t][i]);B.push(b);if(b.c==='crimson')spawnHeart(b);if(b.c==='kim'){b.slp=7;b.kn=2;b.kl=0}if(b.c==='gil'&&!b.clone){b.ea=1;b.r=30}if(b.c==='ren')b.hr=5;if(b.c==='anos'){b.vz=1;b.zq=10;b.vp=.2}}
+const ro=[];if(mode==4){const n=FA.length;FA.forEach((sn,t)=>{const a=-Math.PI/2+t*TAU/n;ro.push([sn,t,[Math.round(W/2+W*.3*Math.cos(a)),Math.round(W/2+W*.3*Math.sin(a))]])})}else for(let t=0;t<2;t++)for(let i=0;i<mode;i++)ro.push([t*3+i,t,ps[t][i]]);
+for(const [sn,t,pp] of ro){const b=mkB(sl[sn],t,pp);B.push(b);if(b.c==='crimson')spawnHeart(b);if(b.c==='kim'){b.slp=7;b.kn=2;b.kl=0}if(b.c==='gil'&&!b.clone){b.ea=1;b.r=30}if(b.c==='ren')b.hr=5;if(b.c==='anos'){b.vz=1;b.zq=10;b.vp=.2}}
 RS=null;for(const b of B)if(b.c==='gil'&&!b.clone){txt(b,'SWORD OF RUPTURE!');burst(b,'#ff2040')}$('#menu').hidden=true;$('#gm').hidden=false;$('#ov').style.display='none';run=1;last=performance.now();requestAnimationFrame(loop)}
-const vis=()=>mode==1?[0,3]:mode==2?[0,1,3,4]:[0,1,2,3,4,5];
-function menu(){const s=$('#slots');s.innerHTML='';vis().forEach(i=>{const b=document.createElement('button');b.className='sl'+(i==sel?' on':'')+(RL.has(i)?' roll':'');b.innerHTML='<img src="'+CH[sl[i]].url+'"><small>'+(i<3?'Tim A':'Tim B')+'</small><b>'+CH[sl[i]].n+'</b>';b.onclick=()=>{sel=i;menu()};s.append(b)})}
+let FA=[0,1,2,3,4];/* slot yang ikut bertarung di mode 5 pemain (diatur lobi online) */
+const FCOL=['#4da3ff','#ff5a6a','#5ad36a','#ffc24a','#c77dff'],
+tLab=t=>mode==4?'Pemain '+((FA[t]==null?t:FA[t])+1):t?'Tim B':'Tim A',
+tCol=t=>mode==4?FCOL[t]:t?'#ff5a6a':'#4da3ff',
+vis=()=>mode==1?[0,3]:mode==2?[0,1,3,4]:mode==4?FA.slice():[0,1,2,3,4,5];
+function menu(){const s=$('#slots');s.innerHTML='';vis().forEach(i=>{const b=document.createElement('button');b.className='sl'+(i==sel?' on':'')+(RL.has(i)?' roll':'');b.innerHTML='<img src="'+CH[sl[i]].url+'"><small>'+(mode==4?'Pemain '+(i+1):i<3?'Tim A':'Tim B')+'</small><b>'+CH[sl[i]].n+'</b>';b.onclick=()=>{sel=i;menu()};s.append(b)})}
 for(const k in CH){const b=document.createElement('button');b.className='gr';b.innerHTML='<img src="'+CH[k].url+'"><span>'+CH[k].n+'</span>';b.onclick=()=>{sl[sel]=k;const v=vis();sel=v[(v.indexOf(sel)+1)%v.length];menu()};$('#grid').append(b)}
 var SW=[],SK={},PU=[],RL=new Set(),rolling=0;
 function jacob(b,t,r){const x=t?t.x:b.x,y=t?t.y:b.y;PU.push({k:'jl',x,y,tm:1.3,t0:1.3,r});
@@ -680,7 +685,7 @@ else if(b.pu==='satanael'){b.pq=1.5;fire(b,t,520,{src:o,r:10,dmg:5,turn:2,col:'#
 else if(b.pu==='odin'){b.pq=2;lightning(o,t);for(let i=0;i<2;i++){const q=ang(b,t)+(i?.5:-.5);shot(b,{src:o,vx:Math.cos(q)*380,vy:Math.sin(q)*380,r:6,dmg:3,turn:5,col:'#222',life:4})}}}
 function stepHZ(dt){for(const w of HZ){if(TF.t>0&&w.team!==TF.team)continue;w.tm-=dt;w.tk-=dt;if(w.src.dead)w.tm=0;if(w.tk<=0){w.tk=.4;for(const o of B)if(!o.dead&&!o.heart&&o.team!==w.team&&segd({x:w.x1,y:w.y1},w.x2,w.y2,o)<o.r+w.w/2)hurt(o,w.dm,w.src)}}HZ=HZ.filter(w=>w.tm>0)}
 function drawHZ(){for(const w of HZ){ctx.lineCap='round';ctx.globalAlpha=.55+.15*Math.sin(performance.now()/90);ctx.strokeStyle=w.c;ctx.lineWidth=w.w;ctx.beginPath();ctx.moveTo(w.x1,w.y1);ctx.lineTo(w.x2,w.y2);ctx.stroke();ctx.strokeStyle='#ffd070';ctx.lineWidth=w.w*.4;ctx.stroke()}ctx.globalAlpha=1}
-$('#m1').onclick=$('#m2').onclick=$('#m3').onclick=e=>{if(rolling)return;mode=+e.currentTarget.id[1];['m1','m2','m3'].forEach((id,i)=>$('#'+id).className=mode==i+1?'on':'');if(!vis().includes(sel))sel=0;menu()};
+$('#m1').onclick=$('#m2').onclick=$('#m3').onclick=$('#m4').onclick=e=>{if(rolling)return;mode=+e.currentTarget.id[1];['m1','m2','m3','m4'].forEach((id,i)=>$('#'+id).className=mode==i+1?'on':'');if(!vis().includes(sel))sel=vis()[0];menu()};
 $('#start').onclick=()=>start();
 const back=()=>{run=0;mvClear();$('#gm').hidden=true;$('#menu').hidden=false};$('#back').onclick=$('#again').onclick=back;
 $('#sp').onclick=()=>{spd=spd==1?2:1;$('#sp').textContent='Kecepatan '+spd+'x'};
@@ -1013,7 +1018,7 @@ const live=new Set(f);for(const [k,r] of RW)if(!live.has(k)){r.el.remove();RW.de
 rows.forEach((x,i)=>{const b=x.b;let r=RW.get(b);if(!r){const el=document.createElement('div');el.innerHTML='<span class="rk"></span>'+(CH[b.c].url?'<img src="'+CH[b.c].url+'">':'')+'<span class="nm">'+CH[b.c].n+'<small></small></span><span class="bw"><i></i></span><span class="vl"></span>';r={el,rk:el.querySelector('.rk'),sm:el.querySelector('small'),bar:el.querySelector('i'),vl:el.querySelector('.vl'),c:'',t:'',w:'',v:'',k:''};RW.set(b,r)}
 const cl='dr'+(b.dead?' dd':'');if(r.c!==cl){r.el.className=cl;r.c=cl}
 const rk=String(md[i]||i+1);if(r.k!==rk){r.rk.textContent=rk;r.k=rk}
-const tx=(b.team?'Tim B':'Tim A')+(b.dead?' \u00b7 tumbang':(b.c==='phainon'&&b.lv!=null?' \u00b7 \u2764\u00d7'+b.lv:''));if(r.t!==tx){r.sm.textContent=tx;r.t=tx}
+const tx=tLab(b.team)+(b.dead?' \u00b7 tumbang':(b.c==='phainon'&&b.lv!=null?' \u00b7 \u2764\u00d7'+b.lv:''));if(r.t!==tx){r.sm.textContent=tx;r.t=tx}
 const w=(x.v/mx*100)+'%';if(r.w!==w){r.bar.style.width=w;r.w=w}
 const vv=String(Math.round(x.v));if(r.v!==vv){r.vl.textContent=vv;r.v=vv}
 if(box.children[i+1]!==r.el)box.insertBefore(r.el,box.children[i+1]||null)})
@@ -1099,36 +1104,45 @@ if(e<170){ctx.save();ctx.globalAlpha=(1-e/170)*.9;ctx.fillStyle='#bff4ff';ctx.fi
 
 })();
 </script>
-<script>/* Mode online (2 pemain): lobi + sinkronisasi pilihan karakter lewat PeerJS (WebRTC).
-   Setiap pemain menjalankan simulasi yang sama dari seed yang sama (lihat start(seed)). */
+<script>/* Mode online 2-5 pemain: lobi + sinkronisasi pilihan karakter lewat PeerJS (WebRTC).
+   Host = pusat: menerima koneksi tamu, menjadi pemegang status lobi, lalu menyiarkan ke semua.
+   Setelah "go", setiap pemain menjalankan simulasi yang sama dari seed yang sama (lihat start(seed)),
+   jadi pertarungan tetap berjalan walau koneksi terputus. */
 (function(){
-const VER='aa-4',
+const VER='aa-5',
 U='b27ebeb1d3d9c68e4f195859',K='LvMkfpcrKOyailaO',H='global.relay.metered.ca', /* TURN Metered; ganti bila credential diganti */
 ICE=[{urls:'stun:stun.relay.metered.ca:80'},{urls:'stun:stun.l.google.com:19302'},
  {urls:'turn:'+H+':80',username:U,credential:K},{urls:'turn:'+H+':80?transport=tcp',username:U,credential:K},
  {urls:'turn:'+H+':443',username:U,credential:K},{urls:'turns:'+H+':443?transport=tcp',username:U,credential:K}],
 SRC=['https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js','https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js'],
-AL='ABCDEFGHJKMNPQRSTUVWXYZ23456789',MOCK=!!window.__NETMOCK;
-let relay=false,link=null,peer=null,role=null,room='',st='idle',msg='',open=false,my=false,their=false,starting=0,applying=0,lastSent='',tSync=0,tJoin=0,tGo=0;
+AL='ABCDEFGHJKMNPQRSTUVWXYZ23456789',MOCK=!!window.__NETMOCK,MAXG=4;
+let relay=false,up=null,peer=null,role=null,room='',st='idle',msg='',mySlot=0,ACT=[0],rd={},starting=0,applying=0,
+ tSync=0,tJoin=0,tGo=0,lastSig='',lastMode=0,lastL=null;
+const peers=new Map(); /* host: slot -> {send,close} */
 const mkCode=()=>Array.from({length:5},()=>AL[_MR()*AL.length|0]).join(''),
-own=i=>role==='host'?i<3:i>=3,
+own=i=>mode==4?i===mySlot:role==='host'?i<3:i>=3,
 okKey=k=>typeof k==='string'&&!!CH[k]&&k!=='mahoraga',
-send=m=>{try{if(link)link.send(m)}catch(e){}};
+toHost=m=>{try{if(up)up.send(m)}catch(e){}},
+toAll=m=>{for(const p of peers.values())try{p.send(m)}catch(e){}};
 
 /* ---------- UI ---------- */
-{const css=document.createElement('style');css.textContent='#net{margin:0 0 10px}#net .np{background:var(--card);border-radius:10px;padding:10px;margin-top:8px;display:flex;flex-direction:column;gap:8px}#net .np input{box-sizing:border-box;padding:8px 10px;border:2px solid transparent;border-radius:10px;background:var(--bg);color:var(--fg);font:inherit;text-transform:uppercase;width:120px}#net .np input:focus{outline:none;border-color:var(--ac)}#net .nm{font-size:13px;color:var(--mut)}#net .nc{font-size:26px;letter-spacing:6px;font-weight:800}#net .nr{display:flex;gap:8px;flex-wrap:wrap;align-items:center}';document.head.append(css)}
+{const css=document.createElement('style');css.textContent='#net{margin:0 0 10px}#net .np{background:var(--card);border-radius:10px;padding:10px;margin-top:8px;display:flex;flex-direction:column;gap:8px}#net .np input[type=text],#net .np #nC{box-sizing:border-box;padding:8px 10px;border:2px solid transparent;border-radius:10px;background:var(--bg);color:var(--fg);font:inherit;text-transform:uppercase;width:120px}#net .np #nC:focus{outline:none;border-color:var(--ac)}#net .nm{font-size:13px;color:var(--mut)}#net .nc{font-size:26px;letter-spacing:6px;font-weight:800}#net .nr{display:flex;gap:8px;flex-wrap:wrap;align-items:center}#net .pl{display:flex;flex-direction:column;gap:2px;font-size:14px}#m1:disabled,#m2:disabled,#m3:disabled{opacity:.4}';document.head.append(css)}
 const box=document.createElement('div');box.id='net';
 box.innerHTML='<button id="nOn">🌐 Main Online</button><div class="np" id="nP" hidden></div>';
 $('#menu h1').insertAdjacentElement('afterend',box);
-const P_=$('#nP');
-function startLabel(){$('#start').textContent=NETO?(my?'⏳ Menunggu lawan… (ketuk untuk batal)':'✅ SIAP'):'MULAI PERTARUNGAN'}
+const P_=$('#nP'),live=()=>st==='live';
+const modeBtns=()=>{['m1','m2','m3','m4'].forEach((id,i)=>{$('#'+id).className=mode==i+1?'on':'';$('#'+id).disabled=!!(NETO&&id!=='m4'&&ACT.length>2)})};
+function startLabel(){const me=rd[mySlot];$('#start').textContent=NETO?(me?'⏳ Menunggu pemain lain… (ketuk untuk batal)':'✅ SIAP'):'MULAI PERTARUNGAN'}
+function players(){return ACT.map(s=>'<div>'+(s===mySlot?'👉 ':'')+'Pemain '+(s+1)+(s===0?' (host)':'')+(s===mySlot?' (kamu)':'')+' — '+(rd[s]?'siap ✅':'belum siap')+'</div>').join('')}
 function render(){
  const m=msg?'<div class="nm">'+msg+'</div>':'';
  if(st==='idle')P_.innerHTML='<div class="nr"><button data-a="make">Buat Room</button></div><div class="nr"><input id="nC" maxlength="5" placeholder="KODE" autocapitalize="characters" autocomplete="off" aria-label="Kode room"><button data-a="join">Gabung</button></div><label class="nm"><input type="checkbox" id="nF" style="width:auto"'+(relay?' checked':'')+'> Paksa lewat server TURN (untuk uji koneksi)</label>'+m;
- else if(st==='hosting')P_.innerHTML=(room?'<div class="nm">Kode room (bagikan ke teman):</div><div class="nc">'+room+'</div><div class="nr"><button data-a="copy">Salin</button><button data-a="leave">Batal</button></div><div class="nm">Menunggu teman bergabung…</div>':'<div class="nm">Menyiapkan room…</div><div class="nr"><button data-a="leave">Batal</button></div>')+m;
+ else if(st==='opening')P_.innerHTML='<div class="nm">Menyiapkan room…</div><div class="nr"><button data-a="leave">Batal</button></div>'+m;
  else if(st==='joining')P_.innerHTML='<div class="nm">Menyambung ke room '+room+'…</div><div class="nr"><button data-a="leave">Batal</button></div>'+m;
- else P_.innerHTML='<div class="nm">✅ Terhubung · Kamu: <b>Tim '+(role==='host'?'A':'B')+'</b> · Room '+room+'</div><div class="nm">Lawan: <b>'+(their?'siap ✅':'belum siap')+'</b>'+(my?' · Kamu: siap ✅':'')+'</div><div class="nm">Pilih karakter untuk slot Tim '+(role==='host'?'A':'B')+', lalu tekan SIAP. Mode & slot lawan tersinkron otomatis.</div><div class="nr"><button data-a="leave">Keluar room</button></div>'+m;
- startLabel()}
+ else P_.innerHTML=(role==='host'?'<div class="nm">Kode room (bagikan ke teman, maks 5 pemain):</div><div class="nc">'+room+'</div><div class="nr"><button data-a="copy">Salin kode</button></div>':'<div class="nm">✅ Terhubung ke room '+room+'</div>')
+  +'<div class="pl">'+players()+'</div>'
+  +'<div class="nm">'+(ACT.length<2?'Menunggu pemain lain bergabung… ':'')+(mode==4?'Mode 5 Pemain: tiap pemain memilih satu karakter di slotnya, semua saling lawan. Menang = terakhir hidup (2–5 pemain). ':'Mode tim: pemain 1 = Tim A, pemain 2 = Tim B. ')+'Pilih karakter lalu tekan SIAP.</div><div class="nr"><button data-a="leave">Keluar room</button></div>'+m;
+ startLabel();modeBtns()}
 $('#nOn').onclick=()=>{P_.hidden=!P_.hidden;if(!P_.hidden)render()};
 P_.addEventListener('click',e=>{const a=e.target.dataset&&e.target.dataset.a;if(!a)return;
  if(a==='make'||a==='join')relay=!!($('#nF')&&$('#nF').checked);
@@ -1140,63 +1154,87 @@ P_.addEventListener('click',e=>{const a=e.target.dataset&&e.target.dataset.a;if(
 /* ---------- transport ---------- */
 function loadPeer(){return window.Peer?Promise.resolve():new Promise((res,rej)=>{let i=0;const nx=()=>{if(i>=SRC.length)return rej(new Error('lib'));const s=document.createElement('script');s.src=SRC[i++];s.onload=res;s.onerror=()=>{s.remove();nx()};document.head.append(s)};nx()})}
 const errTxt=e=>({network:'Tidak bisa terhubung ke server perantara PeerJS. Cek internet.','server-error':'Server perantara PeerJS bermasalah. Coba lagi nanti.','socket-error':'Koneksi ke server perantara terputus.','socket-closed':'Koneksi ke server perantara terputus.','browser-incompatible':'Browser ini tidak mendukung WebRTC.','peer-unavailable':'Room tidak ditemukan. Cek kodenya, atau pastikan temanmu sudah membuat room.'}[e&&e.type]||('Gagal: '+((e&&(e.type||e.message))||'tidak diketahui')));
-function attach(conn){let done=0;const ready=()=>{if(done)return;done=1;link={send:m=>{if(conn.open)conn.send(m)},close:()=>conn.close()};connected()};
- conn.on('open',ready);if(conn.open)ready();conn.on('data',onData);conn.on('close',()=>gone('Lawan keluar atau koneksi terputus.'));conn.on('error',e=>gone(errTxt(e)))}
+/* tiap koneksi: onMsg(m) menerima pesan, onEnd() dipanggil sekali saat putus */
+function wire(conn,onReady,onMsg,onEnd){let done=0,ended=0;const ready=()=>{if(done)return;done=1;onReady({send:m=>{if(conn.open)conn.send(m)},close:()=>{try{conn.close()}catch(e){}}})},end=()=>{if(!ended){ended=1;onEnd()}};
+ conn.on('open',ready);if(conn.open)ready();conn.on('data',onMsg);conn.on('close',end);conn.on('error',end)}
 async function hostRoom(att=0){
- teardown('');st='hosting';room='';render();
- if(MOCK){room=mkCode();role='host';window.__mev=mockEv;window.__mx({k:'host',code:room});render();return}
+ teardown('');st='opening';role='host';render();
+ if(MOCK){room=mkCode();window.__mev=ev=>mockHost(ev);window.__mx({k:'host',code:room});opened();return}
  try{await loadPeer()}catch(e){return fail('Gagal memuat pustaka PeerJS. Cek internet.')}
- if(st!=='hosting')return;
+ if(st!=='opening')return;
  const c=mkCode(),p=new Peer('aarena-'+c,{config:{iceServers:ICE,iceTransportPolicy:relay?'relay':'all'},debug:0});peer=p;
- p.on('open',()=>{if(peer!==p)return;room=c;role='host';render()});
- p.on('connection',conn=>{if(link||open){conn.on('open',()=>conn.close());return}attach(conn)});
+ p.on('open',()=>{if(peer!==p)return;room=c;opened()});
+ p.on('connection',conn=>{let slot=null,link=null;
+  wire(conn,l=>{link=l;if(peers.size>=MAXG){l.send({t:'err',m:'Room penuh (maks 5 pemain).'});setTimeout(()=>l.close(),300);link=null;return}l.send({t:'hi',v:VER})},
+   m=>hostMsg(m,link,s=>{slot=s},()=>slot),
+   ()=>{if(slot!=null&&peers.get(slot)===link)dropGuest(slot)})});
  p.on('error',e=>{if(peer!==p)return;if(e.type==='unavailable-id'&&att<4){p.destroy();peer=null;hostRoom(att+1)}else fail(errTxt(e))});
- p.on('disconnected',()=>{if(peer===p&&!link&&st==='hosting')fail('Terputus dari server perantara. Coba buat room lagi.')})}
+ p.on('disconnected',()=>{if(peer===p&&st==='opening')fail('Terputus dari server perantara. Coba buat room lagi.')})}
 async function joinRoom(c){
  teardown('');st='joining';room=c;role='guest';render();
- tJoin=setTimeout(()=>{if(st==='joining')fail('Gagal tersambung (waktu habis). Jaringan seluler kadang memblokir koneksi langsung antar-HP — coba pakai Wi-Fi.')},20000);
- if(MOCK){window.__mev=mockEv;window.__mx({k:'join',code:c});return}
+ tJoin=setTimeout(()=>{if(st==='joining')fail('Gagal tersambung (waktu habis). Jaringan seluler kadang memblokir koneksi langsung antar-HP — coba pakai Wi-Fi atau centang "Paksa lewat server TURN".')},20000);
+ if(MOCK){window.__mev=ev=>mockGuest(ev);window.__mx({k:'join',code:c});return}
  try{await loadPeer()}catch(e){return fail('Gagal memuat pustaka PeerJS. Cek internet.')}
  if(st!=='joining')return;
  const p=new Peer(undefined,{config:{iceServers:ICE,iceTransportPolicy:relay?'relay':'all'},debug:0});peer=p;
- p.on('open',()=>{if(peer!==p)return;attach(p.connect('aarena-'+c,{reliable:true,serialization:'json'}))});
+ p.on('open',()=>{if(peer!==p)return;wire(p.connect('aarena-'+c,{reliable:true,serialization:'json'}),l=>{up=l;l.send({t:'hi',v:VER})},guestMsg,()=>gone('Host keluar atau koneksi terputus.'))});
  p.on('error',e=>{if(peer===p)fail(errTxt(e))})}
-function mockEv(ev){if(ev.k==='open'){link={send:m=>window.__mx({k:'data',m}),close:()=>window.__mx({k:'close'})};connected()}else if(ev.k==='data')onData(ev.m);else if(ev.k==='close')gone('Lawan keluar atau koneksi terputus.');else if(ev.k==='err')fail(errTxt({type:ev.type}))}
+/* transport tiruan untuk pengujian otomatis (relay buatan lewat halaman uji) */
+const mcid=new Map();
+function mockHost(ev){if(ev.k==='open'){let slot=null,link={send:m=>window.__mx({k:'data',cid:ev.cid,m}),close:()=>window.__mx({k:'close',cid:ev.cid})};mcid.set(ev.cid,{link,get slot(){return slot},set slot(v){slot=v}});if(peers.size>=MAXG){link.send({t:'err',m:'Room penuh (maks 5 pemain).'});return}link.send({t:'hi',v:VER})}
+ else if(ev.k==='data'){const o=mcid.get(ev.cid);if(o)hostMsg(ev.m,o.link,s=>{o.slot=s},()=>o.slot,ev.cid)}
+ else if(ev.k==='close'){const o=mcid.get(ev.cid);mcid.delete(ev.cid);if(o&&o.slot!=null)dropGuest(o.slot)}}
+function mockGuest(ev){if(ev.k==='open'){up={send:m=>window.__mx({k:'data',m}),close:()=>window.__mx({k:'close'})};up.send({t:'hi',v:VER})}else if(ev.k==='data')guestMsg(ev.m);else if(ev.k==='close')gone('Host keluar atau koneksi terputus.');else if(ev.k==='err')fail(errTxt({type:ev.type}))}
 
-/* ---------- sesi ---------- */
-function connected(){clearTimeout(tJoin);open=true;st='live';msg='';my=their=false;starting=0;lastSent='';NETO=own;spd=1;$('#sp').textContent='Kecepatan 1x';$('#sp').style.display='none';
- send({t:'hi',v:VER});applying=0;menu();sync(1);render()}
-function teardown(m){clearTimeout(tJoin);clearTimeout(tSync);clearTimeout(tGo);const l=link,p=peer;link=peer=null;open=false;
- try{if(l)l.close()}catch(e){}try{if(p)p.destroy()}catch(e){}
- st='idle';role=null;room='';my=their=false;starting=0;NETO=null;$('#sp').style.display='';msg=m;startLabel();if(!$('#menu').hidden)menu()}
+/* ---------- status lobi ---------- */
+function opened(){clearTimeout(tJoin);st='live';msg='';mySlot=0;ACT=[0];rd={};starting=0;lastSig='';lastMode=mode;NETO=own;spd=1;$('#sp').textContent='Kecepatan 1x';$('#sp').style.display='none';FA=[0];applying=0;menu();render()}
+function guestIn(){clearTimeout(tJoin);st='live';msg='';starting=0;NETO=own;spd=1;$('#sp').textContent='Kecepatan 1x';$('#sp').style.display='none'}
+function teardown(m){clearTimeout(tJoin);clearTimeout(tSync);clearTimeout(tGo);const u=up,p=peer,ps=[...peers.values()];up=peer=null;peers.clear();mcid.clear();
+ try{if(u)u.close()}catch(e){}ps.forEach(x=>{try{x.close()}catch(e){}});try{if(p)p.destroy()}catch(e){}
+ st='idle';role=null;room='';ACT=[0];rd={};starting=0;NETO=null;FA=[0,1,2,3,4];$('#sp').style.display='';msg=m;startLabel();modeBtns();if(!$('#menu').hidden)menu()}
 function fail(m){teardown(m);P_.hidden=false;render()}
 function gone(m){if(st==='idle')return;fail(m)}
+/* host: rapikan siapa yang hadir, paksa mode 5 pemain bila >2 orang, lalu siarkan ke semua */
+function norm(){ACT=[0,...[...peers.keys()].sort()];if(ACT.length>2&&mode!==4){mode=4;modeBtns()}FA=ACT.slice();for(const k in rd)if(!ACT.includes(+k))delete rd[k];if(!vis().includes(sel))sel=vis().find(own)??vis()[0]}
+const snapshot=()=>({m:mode,s:sl.slice(0,6),act:ACT,rd});
+function broadcast(){norm();applying=1;try{menu()}finally{applying=0}render();toAll({t:'L',L:snapshot()})}
+function dropGuest(slot){const p=peers.get(slot);peers.delete(slot);try{p&&p.close()}catch(e){}rd={};msg='Pemain '+(slot+1)+' keluar.';broadcast()}
+function hostMsg(m,link,setSlot,getSlot){if(!m||typeof m!=='object'||!link)return;const g=getSlot();
+ if(m.t==='hi'){if(g!=null)return;if(m.v!==VER){link.send({t:'err',m:'Versi game berbeda dengan host. Pastikan kalian memakai file yang sama.'});setTimeout(()=>link.close(),300);return}
+  let s=1;while(peers.has(s))s++;if(s>MAXG){link.send({t:'err',m:'Room penuh (maks 5 pemain).'});setTimeout(()=>link.close(),300);return}
+  setSlot(s);peers.set(s,link);rd={};msg='Pemain '+(s+1)+' bergabung.';link.send({t:'W',slot:s});broadcast();return}
+ if(g==null)return;
+ if(m.t==='pick'){const i=m.i|0;if(i<0||i>5||!okKey(m.k))return;const ok=mode==4?i===g:(ACT.length===2&&i>=3);if(!ok)return;sl[i]=m.k;rd[g]=false;broadcast()}
+ else if(m.t==='mode'){const v=m.m|0;if(v<1||v>4||(v<4&&ACT.length>2)||v===mode)return;mode=v;modeBtns();rd={};broadcast()}
+ else if(m.t==='rdy'){rd[g]=!!m.v;render();toAll({t:'L',L:snapshot()});maybeGo()}}
+function guestMsg(m){if(!m||typeof m!=='object')return;
+ if(m.t==='hi'){if(m.v!==VER)fail('Versi game berbeda dengan host. Pastikan kalian memakai file yang sama.')}
+ else if(m.t==='err')fail(m.m||'Ditolak oleh host.')
+ else if(m.t==='W'){mySlot=m.slot|0;role='guest';guestIn()}
+ else if(m.t==='L'&&st==='live')applyL(m.L)
+ else if(m.t==='go'&&st==='live')launch(m)}
+function applyL(L){if(!L||!Array.isArray(L.s)||!Array.isArray(L.act))return;applying=1;try{
+ mode=L.m>=1&&L.m<=4?L.m|0:mode;for(let i=0;i<6;i++)if(okKey(L.s[i]))sl[i]=L.s[i];ACT=L.act.map(x=>x|0);rd=L.rd&&typeof L.rd==='object'?L.rd:{};FA=ACT.slice();
+ lastL={m:mode,s:sl.slice(0,6)};if(!vis().includes(sel))sel=vis().find(own)??vis()[0];menu()}finally{applying=0}
+ render()}
 
-/* ---------- sinkronisasi pilihan ---------- */
-const modeBtns=()=>['m1','m2','m3'].forEach((id,i)=>{$('#'+id).className=mode==i+1?'on':''});
-function sync(force){clearTimeout(tSync);if(!link||!NETO)return;if(rolling){tSync=setTimeout(sync,150);return}
- const s={};for(let i=0;i<6;i++)if(own(i))s[i]=sl[i];const p=JSON.stringify({m:mode,s});if(p===lastSent&&!force)return;lastSent=p;send({t:'cfg',m:mode,s})}
-const fixSel=()=>{if(own(sel))return;const c=sel,v=vis().filter(own);const n=v.find(i=>i>c);sel=n==null?v[0]:n};
-{const _menu=menu;menu=function(){if(NETO)fixSel();_menu();if(NETO){[...$('#slots').children].forEach((b,k)=>{b.style.opacity=own(vis()[k])?'':'.55'});
- if(!applying){if(my){my=false;send({t:'rdy',v:false});render()}clearTimeout(tSync);tSync=setTimeout(sync,150)}}}}
-function applyCfg(m){if(!m||typeof m!=='object')return;applying=1;try{
- if(m.m>=1&&m.m<=3&&m.m!==mode){mode=m.m|0;modeBtns();if(!vis().includes(sel))sel=vis().find(own);if(my){my=false;send({t:'rdy',v:false});render()}}
- if(m.s&&typeof m.s==='object')for(const k in m.s){const i=+k;if(i>=0&&i<6&&!own(i)&&okKey(m.s[k]))sl[i]=m.s[k]}
- lastSent='';menu()}finally{applying=0}
-}
-function launch(m){if(starting)return;starting=1;mode=m.m;sl.splice(0,6,...m.s);modeBtns();applying=1;menu();applying=0;my=their=false;msg='Pertandingan dimulai…';render();
+/* ---------- perubahan pilihan dari pemain lokal ---------- */
+const fixSel=()=>{if(own(sel))return;const c=sel,v=vis().filter(own);if(!v.length)return;const n=v.find(i=>i>c);sel=n==null?v[0]:n};
+{const _menu=menu;menu=function(){if(NETO)fixSel();_menu();if(NETO){[...$('#slots').children].forEach((b,k)=>{b.style.opacity=own(vis()[k])?'':'.55'});if(!applying){clearTimeout(tSync);tSync=setTimeout(push,150)}}}}
+function push(){clearTimeout(tSync);if(!NETO||!live())return;if(rolling){tSync=setTimeout(push,150);return}
+ if(role==='host'){const sg=JSON.stringify([mode,sl.slice(0,6)]);if(sg===lastSig)return;lastSig=sg;if(mode!==lastMode){rd={};lastMode=mode}else rd[0]=false;broadcast()}
+ else if(lastL){for(let i=0;i<6;i++)if(own(i)&&sl[i]!==lastL.s[i]){toHost({t:'pick',i,k:sl[i]});lastL.s[i]=sl[i]}if(mode!==lastL.m){toHost({t:'mode',m:mode});lastL.m=mode}}}
+
+/* ---------- siap & mulai ---------- */
+function launch(m){if(starting)return;if(!m||!Array.isArray(m.s)||m.s.length!==6||!m.s.every(okKey)||!(m.m>=1&&m.m<=4)||typeof m.seed!=='number'||!Array.isArray(m.act))return;
+ starting=1;mode=m.m;sl.splice(0,6,...m.s);ACT=m.act.map(x=>x|0);FA=ACT.slice();rd={};modeBtns();applying=1;menu();applying=0;msg='Pertandingan dimulai…';render();
  tGo=setTimeout(()=>{if(st!=='live')return;spd=1;msg='';start(m.seed);starting=0;render()},1200)}
-function onData(m){if(!m||typeof m!=='object')return;
- if(m.t==='hi'){if(m.v!==VER)fail('Versi game berbeda dengan lawan. Pastikan kalian memakai file yang sama.')}
- else if(m.t==='cfg')applyCfg(m);
- else if(m.t==='rdy'){their=!!m.v;render();maybeGo()}
- else if(m.t==='go'){if(role==='guest'&&Array.isArray(m.s)&&m.s.length===6&&m.s.every(okKey)&&m.m>=1&&m.m<=3&&typeof m.seed==='number')launch(m)}
- else if(m.t==='left'){msg='Lawan kembali ke menu.';render()}}
-function maybeGo(){if(role!=='host'||!my||!their||starting||st!=='live')return;
- const g={t:'go',seed:(_MR()*4294967296)>>>0,m:mode,s:sl.slice(0,6)};send(g);launch(g)}
-$('#start').onclick=()=>{if(!NETO){start();return}if(rolling||starting)return;my=!my;sync(1);send({t:'rdy',v:my});render();maybeGo()};
-$('#back').addEventListener('click',()=>{if(link)send({t:'left'})});
-window.__net={get st(){return st},get role(){return role},get room(){return room}};
+function maybeGo(){if(role!=='host'||starting||st!=='live'||ACT.length<2||!ACT.every(s=>rd[s]))return;
+ const g={t:'go',seed:(_MR()*4294967296)>>>0,m:mode,s:sl.slice(0,6),act:ACT.slice()};toAll(g);launch(g)}
+$('#start').onclick=()=>{if(!NETO){start();return}if(rolling||starting||!live())return;
+ if(role==='host'){clearTimeout(tSync);push();rd[0]=!rd[0];broadcast();maybeGo()}
+ else{clearTimeout(tSync);push();toHost({t:'rdy',v:!rd[mySlot]})}};
+window.__net={get st(){return st},get role(){return role},get room(){return room},get slot(){return mySlot},get act(){return ACT.slice()}};
 })();
 </script>
 <script>(function(){const q=document.querySelector('#q'),c=document.querySelector('#qc'),n=document.querySelector('#qn'),nz=s=>String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
